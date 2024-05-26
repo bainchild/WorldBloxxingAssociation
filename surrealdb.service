@@ -1,0 +1,7 @@
+[Unit]
+Description=Surreal database for bloxxing_match.
+
+[Service]
+Type=simple
+WorkingDirectory=/home/bainchild/bloxxing_match
+ExecStart=/home/bainchild/.surrealdb/surreal start file:bloxxing.db

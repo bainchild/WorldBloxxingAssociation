@@ -1,0 +1,20 @@
+[package]
+name = "bloxxing_match"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+argon2 = "0.5.3"
+axum = {version = "0.7.5", features = ["macros"]}
+axum-extra = { version = "0.9.3", features = ["cookie"] }
+axum-server = {version = "0.6.0", features = ["tls-rustls"]}
+http = "1.1.0"
+robacking = { version = "0.1.0", path = "../robacking" }
+serde = "1.0.202"
+surrealdb = "1.5.0"
+time = { version = "0.3.36", features = ["formatting", "serde"]}
+tokio = {version = "1.37.0", features = ["macros","rt-multi-thread"]}
+tower = "0.4.13"
+tower-http = {version = "0.5.2", features = ["cors"]}
