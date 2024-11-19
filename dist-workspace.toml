@@ -1,0 +1,10 @@
+[workspace]
+members = ["cargo:."]
+
+[dist]
+cargo-dist-version = "0.24.1"
+installers = []
+targets = ["x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+checksum = "sha512"
+source-tarball = false
+include = ["cert/","blog/","fflags/","setup.rbxcdn.com/","assets/"]

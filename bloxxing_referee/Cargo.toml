@@ -1,0 +1,10 @@
+[package]
+name = "bloxxing_referee"
+version = "0.1.0"
+edition = "2021"
+license = "Unlicense"
+
+[dependencies]
+clap = { version = "4.5.21", features = ["derive"] }
+clio = { version = "0.3.5", features = ["clap-parse"] }
+mdns = "3.0.0"

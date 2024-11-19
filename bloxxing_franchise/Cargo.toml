@@ -1,0 +1,7 @@
+[package]
+name = "bloxxing_franchise"
+version = "0.1.0"
+edition = "2021"
+license = "Unlicense"
+
+[dependencies]

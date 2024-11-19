@@ -1,0 +1,2 @@
+This directory stores all asset data, just have the filename be the sha256 hash of it.
+(or any hash matching one stored in the DB)

@@ -9,7 +9,7 @@ use bloxxing_match::{api_404, get_authenticated_user, get_user_from_id};
 use http::Method;
 // use robacking::internal::User;
 use robacking::Roblox::{
-    users_v1::GenderResponse,
+    users_v1::{AuthenticatedUserResponse, GenderResponse, UserRolesResponse},
     Web::WebAPI::{APIError, APIErrors},
 };
 use robacking::Roblox::{
@@ -20,6 +20,7 @@ use surrealdb::{Connection, Surreal};
 use tower_http::cors::CorsLayer;
 pub(crate) fn new<T: Connection>() -> Router<Surreal<T>> {
     Router::new()
+        .route("/users/authenticated", get(get_authed_user))
         .route("/users/:id", get(get_user))
         .route("/users/:id/", get(get_user))
         .route("/birthdate", get(get_auth_birthdate))
@@ -49,6 +50,54 @@ async fn invalid_userid() -> (StatusCode, Json<APIErrors>) {
         }),
     )
 }
+async fn get_authed_user<T: Connection>(
+    db: State<Surreal<T>>,
+    cook: CookieJar,
+) -> Result<(StatusCode, Json<AuthenticatedUserResponse>), (StatusCode, Json<APIErrors>)> {
+    let user = get_authenticated_user(&db, &cook).await;
+    if user.is_ok() {
+        let usear = user.unwrap();
+        Ok((
+            StatusCode::OK,
+            Json(AuthenticatedUserResponse {
+                id: usear.userid,
+                name: usear.username,
+                displayName: usear.display_name.unwrap_or("".to_string()),
+            }),
+        ))
+    } else {
+        let err = user.unwrap_err();
+        Err((
+            match err.errors.get(0).unwrap().code {
+                0 => StatusCode::UNAUTHORIZED,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            },
+            Json(err),
+        ))
+    }
+}
+// async fn get_auth_user_roles<T: Connection>(
+//     db: State<Surreal<T>>,
+//     cook: CookieJar,
+// ) -> Result<(StatusCode, Json<UserRolesResponse>), (StatusCode, Json<APIErrors>)> {
+//     let user = get_authenticated_user(&db, &cook).await;
+//     if user.is_ok() {
+//         let usear = user.unwrap();
+//         Ok((
+//             StatusCode::OK,
+//             Json(UserRolesResponse { roles: usear.roles }),
+//         ))
+//     } else {
+//         let err = user.unwrap_err();
+//         Err((
+//             match err.errors.get(0).unwrap().code {
+//                 0 => StatusCode::UNAUTHORIZED,
+//                 _ => StatusCode::INTERNAL_SERVER_ERROR,
+//             },
+//             Json(err),
+//         ))
+//     }
+// }
 async fn get_auth_birthdate<T: Connection>(
     db: State<Surreal<T>>,
     cook: CookieJar,

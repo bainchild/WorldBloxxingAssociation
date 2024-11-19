@@ -1,15 +1,16 @@
 use axum::{
-    extract::{rejection::JsonRejection, State},
+    extract::State,
     http::{HeaderName, StatusCode},
-    routing::{get, post},
+    routing::get,
     Json, Router,
 };
 use axum_extra::extract::CookieJar;
+use bloxxing_match::get_authenticated_user;
 use bloxxing_match::api_404;
 use http::Method;
 use robacking::Roblox::Web::WebAPI::{APIError, APIErrors};
-use robacking::{internal::User, Roblox::economy_v1::CurrencyResponse};
-use surrealdb::{Connection, Response, Surreal};
+use robacking::Roblox::economy_v1::CurrencyResponse;
+use surrealdb::{Connection, Surreal};
 use tower_http::cors::CorsLayer;
 pub(crate) fn new<T: Connection>() -> Router<Surreal<T>> {
     Router::new()
@@ -32,11 +33,12 @@ pub(crate) fn new<T: Connection>() -> Router<Surreal<T>> {
         .fallback(api_404)
 }
 async fn get_auth_currency<T: Connection>(
-    _db: State<Surreal<T>>,
+    db: State<Surreal<T>>,
     cook: CookieJar,
 ) -> Result<(StatusCode, Json<CurrencyResponse>), (StatusCode, Json<APIErrors>)> {
-    if cook.get(".ROBLOSECURITY").is_some() {
-        Ok((StatusCode::OK, Json(CurrencyResponse { robux: 443 })))
+    let user = get_authenticated_user(&db, &cook).await;
+    if user.is_ok() {
+        Ok((StatusCode::OK, Json(CurrencyResponse { robux: user.unwrap().robux })))
     } else {
         Err((
             StatusCode::UNAUTHORIZED,
