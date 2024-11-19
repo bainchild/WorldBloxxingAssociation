@@ -5,11 +5,11 @@ use axum::{
     Json, Router,
 };
 use axum_extra::extract::CookieJar;
-use bloxxing_match::get_authenticated_user;
 use bloxxing_match::api_404;
+use bloxxing_match::get_authenticated_user;
 use http::Method;
-use robacking::Roblox::Web::WebAPI::{APIError, APIErrors};
 use robacking::Roblox::economy_v1::CurrencyResponse;
+use robacking::Roblox::Web::WebAPI::{APIError, APIErrors};
 use surrealdb::{Connection, Surreal};
 use tower_http::cors::CorsLayer;
 pub(crate) fn new<T: Connection>() -> Router<Surreal<T>> {
@@ -37,8 +37,8 @@ async fn get_auth_currency<T: Connection>(
     cook: CookieJar,
 ) -> Result<(StatusCode, Json<CurrencyResponse>), (StatusCode, Json<APIErrors>)> {
     let user = get_authenticated_user(&db, &cook).await;
-    if user.is_ok() {
-        Ok((StatusCode::OK, Json(CurrencyResponse { robux: user.unwrap().robux })))
+    if let Ok(us) = user {
+        Ok((StatusCode::OK, Json(CurrencyResponse { robux: us.robux })))
     } else {
         Err((
             StatusCode::UNAUTHORIZED,

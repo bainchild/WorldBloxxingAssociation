@@ -1,10 +1,8 @@
-use axum::response::IntoResponse;
 use axum::{http::StatusCode, Json};
 use axum_extra::extract::CookieJar;
 use base64::Engine;
 use rand::Rng;
 use robacking::internal::{Announcement, Message, Session, User};
-use robacking::Roblox::auth_v1::LogoutFromAllSessionsAndReauthenticateRequest;
 use robacking::Roblox::Web::WebAPI::{APIError, APIErrors};
 use surrealdb::{Connection, Surreal};
 pub async fn api_404() -> (StatusCode, Json<APIErrors>) {
@@ -184,7 +182,7 @@ pub async fn get_cookie_object<T: Connection>(
         Ok(mut id) => {
             let seshs: Result<Vec<Session>, _> = id.take(1);
             if seshs.as_ref().is_ok_and(|x| x.len() == 1) {
-                Ok(seshs.unwrap().get(0).unwrap().clone())
+                Ok(seshs.unwrap().first().unwrap().clone())
             } else {
                 Err(make_error(
                     0,
@@ -235,8 +233,8 @@ pub async fn get_authenticated_user<T: Connection>(
         Ok(mut id) => {
             let seshs: Result<Vec<Session>, _> = id.take(1);
             println!("user sesh: {:?}", seshs);
-            if seshs.as_ref().is_ok_and(|x| x.len() > 0) {
-                get_user_from_id(db, seshs.unwrap().get(0).unwrap().userid).await
+            if seshs.as_ref().is_ok_and(|x| !x.is_empty()) {
+                get_user_from_id(db, seshs.unwrap().first().unwrap().userid).await
             } else {
                 // println!("is NOT okay, or is empty");
                 Err(make_error(
@@ -436,22 +434,20 @@ pub fn new_auth_ticket<'a>(
     let mut sha = Sha1::new();
     Digest::update(
         &mut sha,
-        vec![
-            userid.to_string(),
+        [userid.to_string(),
             username.to_string(),
             appearance.to_string(),
             jobid.to_string(),
-            time.to_string(),
-        ]
+            time.to_string()]
         .join("\n"),
     );
     let sig1 =
         base64::engine::general_purpose::STANDARD_NO_PAD.encode(Digest::finalize_reset(&mut sha));
     Digest::update(
         &mut sha,
-        vec![userid.to_string(), jobid.to_string(), time.to_string()].join("\n"),
+        [userid.to_string(), jobid.to_string(), time.to_string()].join("\n"),
     );
     let sig2 =
         base64::engine::general_purpose::STANDARD_NO_PAD.encode(Digest::finalize_reset(&mut sha));
-    return time.to_string() + ";" + sig1.as_str() + ";" + sig2.as_str();
+    time.to_string() + ";" + sig1.as_str() + ";" + sig2.as_str()
 }

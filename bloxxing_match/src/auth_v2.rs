@@ -1,15 +1,10 @@
-use time::Duration;
-
 use axum::{
     extract::{rejection::JsonRejection, State},
     http::{HeaderName, StatusCode},
     routing::post,
     Json, Router,
 };
-use axum_extra::extract::{
-    cookie::{Cookie, SameSite},
-    CookieJar,
-};
+use axum_extra::extract::{cookie::Cookie, CookieJar};
 use bloxxing_match::{
     api_404, create_cookie_for_userid, get_cookie_object, get_user_from_username, make_error,
     AUTH_COOKIE_NAME,
@@ -18,7 +13,7 @@ use http::Method;
 use robacking::{
     internal::{AvatarInfo, EmperorsNewDefault},
     Roblox::{
-        auth_v2::{LoginRequest, LoginRequestCType},
+        auth_v2::LoginRequestCType,
         develop_v1::ApiEmptyResponseModel,
         Web::WebAPI::{APIError, APIErrors},
     },
@@ -91,7 +86,7 @@ fn hash_argon2(str: String) -> Result<String, argon2::password_hash::Error> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
     let password_hash = argon2.hash_password(password, &salt)?.to_string();
-    return Ok(password_hash);
+    Ok(password_hash)
 }
 async fn get_counter<T: Connection>(
     db: &Surreal<T>,
@@ -107,8 +102,8 @@ async fn get_counter<T: Connection>(
             if w.is_ok() && w.as_ref().unwrap().is_some() {
                 Ok(w.unwrap().unwrap().to_owned())
             } else {
-                if w.is_err() {
-                    println!("error getting the count: {:?}", w.unwrap_err());
+                if let Err(e) = w {
+                    println!("error getting the count: {:?}", e);
                 }
                 Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -247,7 +242,7 @@ async fn signup<T: Connection>(
                     },
                     display_name: {
                         let ndn = inf2s.displayName.clone();
-                        if ndn == "".to_string() {
+                        if ndn.is_empty() {
                             None
                         } else {
                             Some(ndn)
@@ -321,23 +316,23 @@ async fn login<T: Connection>(
         }
         println!("sign in {:?}", inf2s);
         let tryuser = get_user_from_username(&db.0, inf2s.cvalue.clone()).await;
-        if !tryuser.is_ok() {
-            return Err((StatusCode::NOT_FOUND, Json(tryuser.unwrap_err())));
+        if let Err(e) = tryuser {
+            return Err((StatusCode::NOT_FOUND, Json(e)));
         }
         let user = tryuser.unwrap();
         let hashe = PasswordHash::new(user.password.as_str());
-        if !hashe.is_ok() {
+        if hashe.is_err() {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(make_error(1, "Failed to parse.", None)),
             ));
         }
-        if !Argon2::default()
+        if Argon2::default()
             .verify_password(
                 inf2s.password.bytes().collect::<Vec<u8>>().as_slice(),
                 &hashe.unwrap(),
             )
-            .is_ok()
+            .is_err()
         {
             return Err((
                 StatusCode::UNAUTHORIZED,
@@ -349,7 +344,7 @@ async fn login<T: Connection>(
             ));
         };
         let cooked = create_cookie_for_userid(&db.0, user.userid).await;
-        if !cooked.is_ok() {
+        if cooked.is_err() {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(make_error(0, "Failed to create cookie.", None)),

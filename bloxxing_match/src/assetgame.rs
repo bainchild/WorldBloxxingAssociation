@@ -9,7 +9,6 @@ use bloxxing_match::{api_404, get_authenticated_user, new_auth_ticket, unixtime}
 use http::HeaderName;
 use http::Method;
 use http::Request;
-use robacking::Roblox::auth_v1::SkinnyUserResponse;
 use serde::{Deserialize, Serialize};
 use surrealdb::{Connection, Surreal};
 use tower_http::cors::CorsLayer;
@@ -227,8 +226,7 @@ async fn get_join_script<T: std::fmt::Debug>(req: Request<T>) -> String {
         BrowserTrackerId: "".to_string(),
         ClientTicket: req
             .headers()
-            .get("RBXAuthenticationTicket")
-            .and_then(|x| Some(x.to_str().unwrap().to_string()))
+            .get("RBXAuthenticationTicket").map(|x| x.to_str().unwrap().to_string())
             .unwrap_or_else(|| {
                 new_auth_ticket(unixtime(), 1, "ROBLOX", 1, "https://avatar.roblox.com")
             }),

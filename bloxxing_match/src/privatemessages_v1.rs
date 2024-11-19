@@ -92,7 +92,7 @@ async fn get_announcements<T: Connection>(
                     //     two.unread.announcements,
                     //     announces.len()
                     // );
-                    if two.unread.announcements > 0 && announces.len() > 0 {
+                    if two.unread.announcements > 0 && !announces.is_empty() {
                         /* let r=*/
                         // we don't care cause unread isn't important
                         let _ = db
@@ -245,10 +245,10 @@ async fn get_messages<T: Connection>(
                 let spawns: Result<Vec<Spawns>, _> = a.take(1);
                 if spawns.as_ref().is_ok_and(|x| !x.is_empty()) {
                     let targ = match queros.messageTab {
-                        MessageTab::sent => spawns.unwrap().get(0).unwrap().sent_messages.clone(),
-                        MessageTab::inbox => spawns.unwrap().get(0).unwrap().inbox_messages.clone(),
+                        MessageTab::sent => spawns.unwrap().first().unwrap().sent_messages.clone(),
+                        MessageTab::inbox => spawns.unwrap().first().unwrap().inbox_messages.clone(),
                         MessageTab::archive => {
-                            spawns.unwrap().get(0).unwrap().archive_messages.clone()
+                            spawns.unwrap().first().unwrap().archive_messages.clone()
                         }
                     };
                     let mut msgs = Vec::new();
@@ -400,21 +400,19 @@ async fn send_message<T: Connection>(
                 let uid: u64;
                 if smrbad.userId.is_some() {
                     uid = smrbad.userId.unwrap()
+                } else if useafterfreer.is_ok() {
+                    uid = useafterfreer.as_ref().unwrap().userid
                 } else {
-                    if useafterfreer.is_ok() {
-                        uid = useafterfreer.as_ref().unwrap().userid
-                    } else {
-                        return Err((
-                            StatusCode::BAD_REQUEST,
-                            Json(APIErrors {
-                                errors: vec![APIError {
-                                    code: 1,
-                                    message: "No user id.".to_string(),
-                                    userFacingMessage: None,
-                                }],
-                            }),
-                        ));
-                    }
+                    return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(APIErrors {
+                            errors: vec![APIError {
+                                code: 1,
+                                message: "No user id.".to_string(),
+                                userFacingMessage: None,
+                            }],
+                        }),
+                    ));
                 }
                 send = Json(SendMessageRequestProper {
                     replyMessageId: smrbad.replyMessageId,

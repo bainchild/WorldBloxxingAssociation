@@ -234,7 +234,7 @@ async fn signup<T: Connection>(
                     password: res.unwrap().serialize().to_string(),
                     display_name: {
                         let ndn = inf2s.displayName.clone();
-                        if ndn == "".to_string() {
+                        if ndn.is_empty() {
                             None
                         } else {
                             Some(ndn)
@@ -308,23 +308,23 @@ async fn login<T: Connection>(
         }
         println!("sign in {:?}", inf2s);
         let tryuser = get_user_from_username(&db.0, inf2s.cvalue.clone()).await;
-        if !tryuser.is_ok() {
-            return Err((StatusCode::NOT_FOUND, Json(tryuser.unwrap_err())));
+        if let Err(e) = tryuser {
+            return Err((StatusCode::NOT_FOUND, Json(e)));
         }
         let user = tryuser.unwrap();
         let hashe = PasswordHash::new(user.password.as_str());
-        if !hashe.is_ok() {
+        if hashe.is_err() {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(make_error(1, "Failed to parse.", None)),
             ));
         }
-        if !Argon2::default()
+        if Argon2::default()
             .verify_password(
                 inf2s.password.bytes().collect::<Vec<u8>>().as_slice(),
                 &hashe.unwrap(),
             )
-            .is_ok()
+            .is_err()
         {
             return Err((
                 StatusCode::UNAUTHORIZED,
@@ -336,7 +336,7 @@ async fn login<T: Connection>(
             ));
         };
         let cooked = create_cookie_for_userid(&db.0, user.userid).await;
-        if !cooked.is_ok() {
+        if cooked.is_err() {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(make_error(0, "Failed to create cookie.", None)),

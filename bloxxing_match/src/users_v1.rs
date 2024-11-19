@@ -9,7 +9,7 @@ use bloxxing_match::{api_404, get_authenticated_user, get_user_from_id};
 use http::Method;
 // use robacking::internal::User;
 use robacking::Roblox::{
-    users_v1::{AuthenticatedUserResponse, GenderResponse, UserRolesResponse},
+    users_v1::{AuthenticatedUserResponse, GenderResponse},
     Web::WebAPI::{APIError, APIErrors},
 };
 use robacking::Roblox::{
@@ -68,7 +68,7 @@ async fn get_authed_user<T: Connection>(
     } else {
         let err = user.unwrap_err();
         Err((
-            match err.errors.get(0).unwrap().code {
+            match err.errors.first().unwrap().code {
                 0 => StatusCode::UNAUTHORIZED,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
@@ -129,7 +129,7 @@ async fn get_auth_birthdate<T: Connection>(
     } else {
         let err = user.unwrap_err();
         Err((
-            match err.errors.get(0).unwrap().code {
+            match err.errors.first().unwrap().code {
                 0 => StatusCode::UNAUTHORIZED,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
@@ -153,7 +153,7 @@ async fn get_auth_description<T: Connection>(
     } else {
         let err = user.unwrap_err();
         Err((
-            match err.errors.get(0).unwrap().code {
+            match err.errors.first().unwrap().code {
                 0 => StatusCode::UNAUTHORIZED,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
@@ -177,7 +177,7 @@ async fn get_auth_gender<T: Connection>(
     } else {
         let err = user.unwrap_err();
         Err((
-            match err.errors.get(0).unwrap().code {
+            match err.errors.first().unwrap().code {
                 0 => StatusCode::UNAUTHORIZED,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
@@ -220,7 +220,7 @@ async fn get_user<T: Connection>(
                     // }),
             ))
         } else {
-            match user.unwrap_err().errors.get(0).unwrap().code {
+            match user.unwrap_err().errors.first().unwrap().code {
                 1 => Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(APIErrors {
