@@ -1,0 +1,3 @@
+Place the ssl public key in `cert.pem` and the private key in `key.pem`,
+optionally run make_cacert_pem.sh, and if you have the tools installed or available,
+it will generate a cacert.pem to place in the ssl directory of a roblox installation!
